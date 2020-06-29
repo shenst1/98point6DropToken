@@ -35,17 +35,24 @@ export default function GameBoard() {
   }
   const placeMove = (columnId) => {
     if (columnCounts[columnId] < boardSize) {
+      // add the latest move to the array of moves
       moves.push(columnId);
+
+      // place the latest move on the game board
       gameBoard[columnId][columnCounts[columnId]++] = turn ? 'red' : 'blue';
-      // add move to winning combinations count
+
+      // increment running totals of squares occupied in winning combinations
       const player = turn ? red : blue;
       const rowId = columnCounts[columnId] - 1;
       player[rowId]++;
       player[columnId + boardSize]++;
-      // first diagonal (ascending from lower right to upper left)
+
+      // first diagonal (ascending from lower left to upper right)
       if(rowId === columnId) player[boardSize*2]++;
+
       // second diagonal (descending from upper left to lower right)
       if(rowId === boardSize - 1 - columnId) player[(boardSize*2)+1]++;
+
       // Update component state
       turn ? setRed(player) : setBlue(player);
       setTurn(!turn);
@@ -54,8 +61,8 @@ export default function GameBoard() {
       setMoves(moves);
       setInvalid(false);
     } else {
+      // The column is already full. Show the message
       setInvalid(true)
-      console.log("illegal move");
     }
   }
 
@@ -84,7 +91,7 @@ export default function GameBoard() {
         if(red[i] === boardSize) return "Red";
         if(blue[i] === boardSize) return "Blue";
     }
-    // We can improve the logic on a draw by ending the game when only a draw is mathmatically possible
+    // TODO: We can improve the logic on a draw by ending the game earlier than the last move
     return moves.length ===  boardSize * boardSize ? "Draw" : false;
 
   }
@@ -124,6 +131,11 @@ export default function GameBoard() {
       {
         !isNewGame && (
           <React.Fragment>
+             {
+              isInvalid && (
+                <p>Oops! That isn't a legal move. The column must be empty.</p>
+              )
+            }
             { !gameResult ? (
               <div>
                   {columnButtons.map( (button, i) => (<button key={i} style={{...styles.square, cursor: 'pointer'}} onClick={handleColumnSelect(i)}></button>) )}
@@ -136,11 +148,7 @@ export default function GameBoard() {
               </p>
             )
             }
-            {
-              isInvalid && (
-                <p>Oops! That isn't a legal move. The column must be empty.</p>
-              )
-            }
+           
             <div style={styles.board}>
               {
                 gameBoard.map((row, i) => (
