@@ -1,6 +1,7 @@
 import React from 'react';
 import fetch from 'node-fetch';
 export default function GameBoard() {
+  // The API only expects a board size of 4, but best to make it possible to change the board size in the future.
   const boardSize = 4;
   const opponentURL = 'https://w0ayb2ph1k.execute-api.us-west-2.amazonaws.com/production?moves=';
   const blankBoard = new Array(boardSize).fill().map(() => new Array(boardSize).fill(""));
@@ -17,8 +18,9 @@ export default function GameBoard() {
   const [moves, setMoves] = React.useState([]);
   const [gameBoard, setGameBoard] = React.useState(blankBoard);
   const [isNewGame, setNewGame] = React.useState(true);
-  const [isGameOver, setGameOver] = React.useState(false);
+  const [gameResult, setGameResult] = React.useState(false);
   const [turn, setTurn] = React.useState(true);
+  const [isInvalid, setInvalid] = React.useState(false);
 
   async function getNextMove() {
     try {
@@ -44,14 +46,15 @@ export default function GameBoard() {
       if(rowId === columnId) player[boardSize*2]++;
       // second diagonal (descending from upper left to lower right)
       if(rowId === boardSize - 1 - columnId) player[(boardSize*2)+1]++;
-
       // Update component state
       turn ? setRed(player) : setBlue(player);
       setTurn(!turn);
       setColumnCounts(columnCounts);
       setGameBoard(gameBoard);
       setMoves(moves);
+      setInvalid(false);
     } else {
+      setInvalid(true)
       console.log("illegal move");
     }
   }
@@ -71,7 +74,9 @@ export default function GameBoard() {
     setColumnCounts(initialColumnCounts);
     setRed(winningCountsRed);
     setBlue(winningCountsBlue);
-    setGameOver(false);
+    setGameResult(false);
+    setInvalid(false);
+    setMoves([]);
   }
 
   const checkGameState = () => {
@@ -90,7 +95,7 @@ export default function GameBoard() {
     if (moves.length >= boardSize * 2) {
       const gameState = checkGameState();
       if (gameState) {
-         setGameOver(gameState);
+         setGameResult(gameState);
          return;
       }
     }
@@ -105,33 +110,44 @@ export default function GameBoard() {
         {
           isNewGame ? (
             <React.Fragment>
-              <p>Time for a new game! Would you like to go first or second?</p>
-              <button onClick={handleTurnChoice(true)}>First</button>
-              <button onClick={handleTurnChoice(false)}>Second</button>
+              <p>Time for a new game of 98point6 Drop Token! Would you like to go first or second?</p>
+              <button style={{...styles.button, marginRight: '20px'}} onClick={handleTurnChoice(true)}>First</button>
+              <button style={styles.button} onClick={handleTurnChoice(false)}>Second</button>
             </React.Fragment>
-          ) : (<p>Good luck! Play until you get 4 in a row in any direction, or <button onClick={handleRestart}>Restart</button> anytime.</p>)
+          ) : (
+            <React.Fragment>
+              <p>Good luck! Play until you get 4 in a row in any direction, or restart anytime.</p>
+              <p><button style={styles.button} onClick={handleRestart}>Restart</button></p>
+            </React.Fragment>)  
         }
       </div>
       {
         !isNewGame && (
           <React.Fragment>
-            { !isGameOver ? (
+            { !gameResult ? (
               <div>
-                  {columnButtons.map( (button, i) => (<button key={i} onClick={handleColumnSelect(i)}>Choose me</button>) )}
+                  {columnButtons.map( (button, i) => (<button key={i} style={{...styles.square, cursor: 'pointer'}} onClick={handleColumnSelect(i)}></button>) )}
               </div>
             ) : (
-              <div>
-                The game has ended {isGameOver}
-              </div>
+              <p>
+                {
+                  gameResult === 'Draw' ? 'The game is a Draw!' : `${gameResult} wins!`
+                }
+              </p>
             )
             }
-            <div style={{display: 'flex'}}>
+            {
+              isInvalid && (
+                <p>Oops! That isn't a legal move. The column must be empty.</p>
+              )
+            }
+            <div style={styles.board}>
               {
                 gameBoard.map((row, i) => (
                   <div key={i} style={{display: 'flex', flexDirection: 'column-reverse'}}>
                     {
                       row.map((cell, ii )=> (
-                        <div  key={`${i}${ii}`} style={{padding: '15px', backgroundColor: 'red'}}>{cell}square</div>
+                        <div  key={`${i}${ii}`} style={{...styles.square, backgroundColor: cell } }></div>
                       ))
                     }
                   </div>
@@ -143,4 +159,32 @@ export default function GameBoard() {
       }
     </div>
   )
+}
+const styles = {
+  square: {
+    height: '100px',
+    width: '100px',
+    border: '2px solid gray',
+    backgroundColor: 'white',
+    boxSizing: 'border-box'
+  },
+  board: {
+    display: 'flex',
+    justifyContent: 'center'
+  },
+  button: {
+    margin: 0,
+    border: 'none',
+    overflow: 'visible',
+    padding: '0 30px',
+    verticalAlign: 'middle',
+    fontSize: '14px',
+    lineHeight: '38px',
+    textAlign: 'center',
+    textDecoration: 'none',
+    textTransform: 'uppercase',
+    backgroundColor: '#1e87f0',
+    color: '#fff',
+    border: '1px solid transparent',
+  }
 }
