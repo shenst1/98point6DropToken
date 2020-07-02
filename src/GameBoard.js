@@ -87,7 +87,7 @@ export default function GameBoard() {
   }
 
   const checkGameState = () => {
-    for(var i=0; i<boardSize+2; i++) {
+    for(var i=0; i<(boardSize * 2)+2; i++) {
         if(red[i] === boardSize) return "Red";
         if(blue[i] === boardSize) return "Blue";
     }
